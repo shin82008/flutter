@@ -416,6 +416,23 @@ class FlutterDriver {
     return await _sendCommand(new Scroll(finder, dx, dy, duration, frequency, timeout: timeout)).then((Map<String, dynamic> _) => null);
   }
 
+  /// Tell the driver to perform a dragging action.
+  ///
+  /// A dragging action begins with a "pointer down" event, which commonly maps
+  /// to finger press on the touch screen or mouse button press. A series of
+  /// "pointer move" events follow. The action is completed by a "pointer up"
+  /// event.
+  ///
+  /// [delta] specify the total offset for the entire scrolling action.
+  ///
+  /// [duration] specifies the length of the action.
+  ///
+  /// The move events are generated at a given [frequency] in Hz (or events per
+  /// second). It defaults to 60Hz.
+  Future<Null> drag(SerializableFinder finder, List<List<double>> delta, Duration duration, { int frequency: 60, Duration timeout }) async {
+    return await _sendCommand(new DDrag(finder, delta, duration, frequency, timeout: timeout)).then((Map<String, dynamic> _) => null);
+  }
+
   /// Scrolls the Scrollable ancestor of the widget located by [finder]
   /// until the widget is completely visible.
   ///

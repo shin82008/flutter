@@ -102,6 +102,7 @@ class FlutterDriverExtension {
       'set_semantics': _setSemantics,
       'set_text_entry_emulation': _setTextEntryEmulation,
       'tap': _tap,
+      'drag': _drag,
       'waitFor': _waitFor,
       'waitForAbsent': _waitForAbsent,
       'waitUntilNoTransientCallbacks': _waitUntilNoTransientCallbacks,
@@ -119,6 +120,7 @@ class FlutterDriverExtension {
       'set_semantics': (Map<String, String> params) => new SetSemantics.deserialize(params),
       'set_text_entry_emulation': (Map<String, String> params) => new SetTextEntryEmulation.deserialize(params),
       'tap': (Map<String, String> params) => new Tap.deserialize(params),
+      'drag': (Map<String, String> params) => new DDrag.deserialize(params),
       'waitFor': (Map<String, String> params) => new WaitFor.deserialize(params),
       'waitForAbsent': (Map<String, String> params) => new WaitForAbsent.deserialize(params),
       'waitUntilNoTransientCallbacks': (Map<String, String> params) => new WaitUntilNoTransientCallbacks.deserialize(params),
@@ -320,6 +322,30 @@ class FlutterDriverExtension {
     _prober.binding.dispatchEvent(pointer.up(), hitTest);
 
     return new ScrollResult();
+  }
+
+  Future<DDragResult> _drag(Command command) async {
+    final DDrag dragCommand = command;
+    final Finder target = await _waitForElement(_createFinder(dragCommand.finder));
+    final int totalMoves = dragCommand.delta.length;
+    final Duration pause = dragCommand.duration ~/ totalMoves;
+    //final Offset startLocation = _prober.getCenter(target);
+    final Offset startLocation = new Offset(dragCommand.delta[0][0], dragCommand.delta[0][1]);
+    Offset currentLocation = startLocation;
+    final TestPointer pointer = new TestPointer(1);
+    final HitTestResult hitTest = new HitTestResult();
+
+    _prober.binding.hitTest(hitTest, startLocation);
+    _prober.binding.dispatchEvent(pointer.down(startLocation), hitTest);
+    await new Future<Null>.value(); // so that down and move don't happen in the same microtask
+    for (int moves = 1; moves < totalMoves; moves += 1) {
+      currentLocation = new Offset(dragCommand.delta[moves][0], dragCommand.delta[moves][1]);
+      _prober.binding.dispatchEvent(pointer.move(currentLocation), hitTest);
+      await new Future<Null>.delayed(pause);
+    }
+    _prober.binding.dispatchEvent(pointer.up(), hitTest);
+
+    return new DDragResult();
   }
 
   Future<ScrollResult> _scrollIntoView(Command command) async {
